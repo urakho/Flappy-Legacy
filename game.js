@@ -1622,9 +1622,9 @@ class Game {
             GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
             GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
             GAME_CONFIG.maxGapHeightDifference = Math.floor(40 * GAME_CONFIG.scale);
-            GAME_CONFIG.pipeSpeed = 5 * 75.0;  // 2.5x быстрее
-            GAME_CONFIG.jumpPower = 5 * 75.0;  // 25% ниже прыжки
-            GAME_CONFIG.gravity = 0.2 * 75.0;  // 25% сильнее гравитация
+            GAME_CONFIG.pipeSpeed = 5 * 1.5;  // 50% быстрее
+            GAME_CONFIG.jumpPower = 5 * 0.75;  // 25% ниже прыжки
+            GAME_CONFIG.gravity = 0.2 * 2.0;  // 2.0x сильнее гравитация
         } else {
             GAME_CONFIG.scale = 1;
         }
@@ -1741,6 +1741,20 @@ class Game {
             this.showThemesModal();
         });
 
+        // Кнопка очистки (только на мобильных)
+        const resetBtn = document.getElementById('resetBtn');
+        if (resetBtn) {
+            const resetFunction = () => {
+                console.log('Reset button clicked');
+                document.getElementById('resetModal').style.display = 'block';
+            };
+            resetBtn.addEventListener('click', resetFunction);
+            resetBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                resetFunction();
+            });
+        }
+
         // Retry после game over
         const retryBtn = document.getElementById('retryBtn');
         retryBtn.addEventListener('click', () => this.startGame());
@@ -1791,6 +1805,57 @@ class Game {
                 this.bird.addFireEffect();
             }
         });
+
+        // Обработчики для модалки сброса
+        const resetYesBtn = document.getElementById('resetYesBtn');
+        if (resetYesBtn) {
+            resetYesBtn.addEventListener('click', () => {
+                localStorage.removeItem('flappy-coins');
+                localStorage.removeItem('flappy-gems');
+                localStorage.removeItem('flappy-characters');
+                localStorage.removeItem('flappy-rented-characters');
+                localStorage.removeItem('flappy-pipes-passed');
+                localStorage.removeItem('flappy-record');
+                localStorage.removeItem('flappy-themes');
+                location.reload();
+            });
+            resetYesBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('flappy-coins');
+                localStorage.removeItem('flappy-gems');
+                localStorage.removeItem('flappy-characters');
+                localStorage.removeItem('flappy-rented-characters');
+                localStorage.removeItem('flappy-pipes-passed');
+                localStorage.removeItem('flappy-record');
+                localStorage.removeItem('flappy-themes');
+                location.reload();
+            });
+        }
+
+        const resetNoBtn = document.getElementById('resetNoBtn');
+        if (resetNoBtn) {
+            resetNoBtn.addEventListener('click', () => {
+                document.getElementById('resetModal').style.display = 'none';
+            });
+            resetNoBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                document.getElementById('resetModal').style.display = 'none';
+            });
+        }
+
+        // Закрытие модалки по крестику
+        const resetModalClose = document.querySelector('#resetModal .modal-close');
+        if (resetModalClose) {
+            resetModalClose.onclick = () => document.getElementById('resetModal').style.display = 'none';
+        }
+
+        // Закрытие по клику вне модалки
+        window.onclick = (e) => {
+            const resetModal = document.getElementById('resetModal');
+            if (e.target === resetModal) {
+                resetModal.style.display = 'none';
+            }
+        };
     }
 
     renderUI() {

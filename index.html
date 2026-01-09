@@ -24,6 +24,7 @@
             <div class="menu-buttons">
                 <button id="charactersBtn" class="btn btn-secondary">ПЕРСОНАЖИ</button>
                 <button id="themesBtn" class="btn btn-secondary">ТЕМЫ</button>
+                <button id="resetBtn" class="btn btn-danger">ОЧИСТИТЬ</button>
             </div>
         </div>
     </div>
@@ -90,6 +91,19 @@
         <div class="modal-content">
             <span class="modal-close">&times;</span>
             <div id="unlockConditionsText"></div>
+        </div>
+    </div>
+
+    <!-- Модалка подтверждения сброса -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Подтверждение сброса</h2>
+            <p>Вы уверены, что хотите сбросить ВСЕ достижения, монеты, гемы и рекорд? Это действие нельзя отменить!</p>
+            <div style="display: flex; justify-content: space-around; margin-top: 20px;">
+                <button id="resetYesBtn" class="btn btn-danger">ДА</button>
+                <button id="resetNoBtn" class="btn btn-secondary">НЕТ</button>
+            </div>
         </div>
     </div>
 
