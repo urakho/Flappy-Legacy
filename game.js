@@ -207,8 +207,8 @@ class Bird {
     constructor(x, y, skin, theme, game) {
         this.x = x;
         this.y = y;
-        this.width = 34;
-        this.height = 24;
+        this.width = 34 * (GAME_CONFIG.scale || 1);
+        this.height = 24 * (GAME_CONFIG.scale || 1);
         this.velocityY = 0;
         this.skin = skin;
         this.theme = theme;
@@ -1211,7 +1211,7 @@ class PipeManager {
             x: GAME_CONFIG.canvasWidth,
             topHeight: isFireWall ? 0 : topHeight, // Огненная стена занимает весь экран
             gapSize: isFireWall ? 0 : gapSize, // Нет зазора
-            width: 60,
+            width: 60 * (GAME_CONFIG.scale || 1),
             scored: false,
             hasSpawnedCoin: false,
             coinX: 0,
@@ -1370,9 +1370,9 @@ class CoinManager {
 
     spawnCoin(pipeX, gapY, gapSize) {
         this.coins.push({
-            x: pipeX + 30,
+            x: pipeX + 30 * (GAME_CONFIG.scale || 1),
             y: gapY + gapSize / 2,
-            radius: 8,
+            radius: 8 * (GAME_CONFIG.scale || 1),
             rotation: 0
         });
     }
@@ -1618,12 +1618,15 @@ class Game {
             const aspectRatio = 800 / 600;
             GAME_CONFIG.canvasWidth = Math.min(window.innerWidth * 0.9, 800);
             GAME_CONFIG.canvasHeight = GAME_CONFIG.canvasWidth / aspectRatio;
-            GAME_CONFIG.pipeSpacing = Math.floor(GAME_CONFIG.pipeSpacing * (GAME_CONFIG.canvasWidth / 800));
-            GAME_CONFIG.pipeGapSize = Math.floor(GAME_CONFIG.pipeGapSize * (GAME_CONFIG.canvasWidth / 800));
-            GAME_CONFIG.pipeSpeed = Math.floor(GAME_CONFIG.pipeSpeed * (GAME_CONFIG.canvasWidth / 800));
-            GAME_CONFIG.maxGapHeightDifference = Math.floor(GAME_CONFIG.maxGapHeightDifference * (GAME_CONFIG.canvasWidth / 800));
-            GAME_CONFIG.baseSpeedMultiplier = 0.6;
-            GAME_CONFIG.speedAcceleration = 0.00005;
+            GAME_CONFIG.scale = GAME_CONFIG.canvasWidth / 800;
+            GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
+            GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
+            GAME_CONFIG.pipeSpeed = 5; // Оставляем базовую скорость
+            GAME_CONFIG.maxGapHeightDifference = Math.floor(40 * GAME_CONFIG.scale);
+            GAME_CONFIG.baseSpeedMultiplier = 0.75; // Оставляем базовое
+            GAME_CONFIG.speedAcceleration = 0.0001; // Оставляем базовое
+        } else {
+            GAME_CONFIG.scale = 1;
         }
 
         this.canvas = document.getElementById('gameCanvas');

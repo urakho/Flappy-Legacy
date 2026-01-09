@@ -529,6 +529,8 @@ h3 {
     .skins-list {
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
         gap: 8px;
+        max-height: 50vh;
+        overflow-y: auto;
     }
 
     .skin-item {
