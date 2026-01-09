@@ -1622,6 +1622,9 @@ class Game {
             GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
             GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
             GAME_CONFIG.maxGapHeightDifference = Math.floor(40 * GAME_CONFIG.scale);
+            GAME_CONFIG.pipeSpeed = 5 * 75.0;  // 2.5x быстрее
+            GAME_CONFIG.jumpPower = 5 * 75.0;  // 25% ниже прыжки
+            GAME_CONFIG.gravity = 0.2 * 75.0;  // 25% сильнее гравитация
         } else {
             GAME_CONFIG.scale = 1;
         }
