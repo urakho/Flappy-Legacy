@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flappy Legacy</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <!-- Стартовый экран -->
+    <div id="startScreen" class="screen active">
+        <div class="screen-content">
+            <h1>FLAPPY LEGACY</h1>
+            <div class="stats-display">
+                <div class="stat"><span>Рекорд:</span> <strong id="recordDisplay">0</strong></div>
+                <div class="stat"><span>Общий баланс:</span> <span id="currencyDisplay">0🪙|0💎</span></div>
+            </div>
+            <button id="startBtn" class="btn btn-primary">СТАРТ</button>
+            
+            <div class="menu-buttons">
+                <button id="charactersBtn" class="btn btn-secondary">ПЕРСОНАЖИ</button>
+                <button id="themesBtn" class="btn btn-secondary">ТЕМЫ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Экран Game Over -->
+    <div id="gameOverScreen" class="screen">
+        <div class="screen-content">
+            <h2>GAME OVER</h2>
+            <div class="stats-display">
+                <div class="stat"><span>Счёт:</span> <strong id="scoreGameOver">0</strong></div>
+                <div class="stat"><span>Монеты забега:</span> <strong id="coinsGameOver">0</strong></div>
+                <div class="stat"><span>Общий баланс:</span> <span id="totalCurrencyDisplay">0🪙|0💎</span></div>
+            </div>
+            <div id="skinMessage" class="skin-message"></div>
+            <div class="button-group">
+                <button id="retryBtn" class="btn btn-primary">ЗАНОВО</button>
+                <button id="menuBtn" class="btn btn-secondary">МЕНЮ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- HUD во время игры -->
+    <div id="gameHUD" class="hud">
+        <div class="hud-item score">Счёт: <span id="hudScore">0</span></div>
+        <div class="hud-item coins"><span id="hudCurrency">0🪙|0💎</span></div>
+        <div class="hud-item status" id="hudStatus"></div>
+        <div class="hud-item ability" id="hudAbility"></div>
+    </div>
+
+    <!-- Консоль -->
+    <div id="console" class="console">
+        <div class="console-output" id="consoleOutput"></div>
+        <input type="text" id="consoleInput" class="console-input" placeholder="Введите команду (например: /coins 100) или нажмите / для справки">
+    </div>
+
+    <!-- Модальное окно для способностей -->
+    <div id="abilitiesModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <pre id="abilitiesText"></pre>
+        </div>
+    </div>
+
+    <!-- Модальное окно для скинов -->
+    <div id="skinsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>ВЫБОР ПЕРСОНАЖА</h2>
+            <div id="skinsModalList" class="skins-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для тем -->
+    <div id="themesModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>ВЫБОР ТЕМЫ</h2>
+            <div id="themesModalList" class="themes-list"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для условий разблокировки -->
+    <div id="unlockConditionsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <div id="unlockConditionsText"></div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
