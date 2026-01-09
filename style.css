@@ -465,3 +465,129 @@ h3 {
     opacity: 0.8;
     margin-top: 3px;
 }
+
+/* АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
+@media (max-width: 768px) {
+    body {
+        overflow: auto; /* Разрешить прокрутку на мобильных */
+    }
+
+    #gameContainer {
+        width: 100vw;
+        height: auto;
+        max-width: 100vw;
+        border: 2px solid #333;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    canvas {
+        width: 100%;
+        height: auto;
+        max-width: 100%;
+    }
+
+    .screen-content {
+        padding: 20px;
+        max-width: 95vw;
+        max-height: 95vh;
+        font-size: 0.9em;
+    }
+
+    h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+    }
+
+    h2 {
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+
+    .stats-display {
+        font-size: 1em;
+    }
+
+    .btn {
+        padding: 15px 30px;
+        font-size: 1.2em;
+        min-width: 120px;
+    }
+
+    .menu-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .menu-buttons .btn {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    /* Модалки персонажей */
+    .skins-list {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
+        gap: 8px;
+    }
+
+    .skin-item {
+        height: 100px !important;
+        padding: 8px !important;
+        font-size: 0.8em;
+    }
+
+    .skin-item div {
+        font-size: 0.9em;
+    }
+
+    /* Модалки тем */
+    .themes-list {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+        gap: 8px;
+    }
+
+    .theme-item {
+        padding: 10px;
+        font-size: 0.9em;
+    }
+
+    /* HUD */
+    .hud {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        font-size: 0.9em;
+    }
+
+    .hud-item {
+        margin-bottom: 5px;
+        padding: 5px 10px;
+    }
+
+    /* Консоль */
+    .console {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        width: auto;
+        max-width: none;
+    }
+
+    .console-input {
+        font-size: 0.9em;
+        padding: 8px;
+    }
+
+    /* Модалки способностей и условий */
+    .modal-content {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        padding: 15px;
+        font-size: 0.9em;
+    }
+
+    .modal-close {
+        top: 5px;
+        right: 5px;
+        font-size: 1.5em;
+    }
+}

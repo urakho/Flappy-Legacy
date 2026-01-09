@@ -1613,6 +1613,18 @@ class ThemeSystem {
 // ==================== ГЛАВНЫЙ КЛАСС ИГРЫ ====================
 class Game {
     constructor() {
+        // Адаптация для мобильных устройств
+        if (window.innerWidth < 768) {
+            GAME_CONFIG.canvasWidth = 400;
+            GAME_CONFIG.canvasHeight = 300;
+            GAME_CONFIG.pipeSpacing = 150;
+            GAME_CONFIG.pipeGapSize = 120;
+            GAME_CONFIG.pipeSpeed = 3;
+            GAME_CONFIG.maxGapHeightDifference = 30;
+            GAME_CONFIG.baseSpeedMultiplier = 0.6;
+            GAME_CONFIG.speedAcceleration = 0.00005;
+        }
+
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
@@ -1649,8 +1661,21 @@ class Game {
         const container = document.getElementById('gameContainer');
         this.canvas.width = GAME_CONFIG.canvasWidth;
         this.canvas.height = GAME_CONFIG.canvasHeight;
-        container.style.width = this.canvas.width + 'px';
-        container.style.height = this.canvas.height + 'px';
+        
+        if (window.innerWidth < 768) {
+            const aspectRatio = GAME_CONFIG.canvasWidth / GAME_CONFIG.canvasHeight;
+            const containerWidth = Math.min(window.innerWidth - 20, GAME_CONFIG.canvasWidth);
+            const containerHeight = containerWidth / aspectRatio;
+            container.style.width = containerWidth + 'px';
+            container.style.height = containerHeight + 'px';
+            this.canvas.style.width = '100%';
+            this.canvas.style.height = '100%';
+        } else {
+            container.style.width = this.canvas.width + 'px';
+            container.style.height = this.canvas.height + 'px';
+            this.canvas.style.width = '';
+            this.canvas.style.height = '';
+        }
     }
 
     loadThemeImages() {
