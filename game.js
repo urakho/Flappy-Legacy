@@ -1615,12 +1615,13 @@ class Game {
     constructor() {
         // Адаптация для мобильных устройств
         if (window.innerWidth < 768) {
-            GAME_CONFIG.canvasWidth = 400;
-            GAME_CONFIG.canvasHeight = 300;
-            GAME_CONFIG.pipeSpacing = 150;
-            GAME_CONFIG.pipeGapSize = 120;
-            GAME_CONFIG.pipeSpeed = 3;
-            GAME_CONFIG.maxGapHeightDifference = 30;
+            const aspectRatio = 800 / 600;
+            GAME_CONFIG.canvasWidth = Math.min(window.innerWidth * 0.9, 800);
+            GAME_CONFIG.canvasHeight = GAME_CONFIG.canvasWidth / aspectRatio;
+            GAME_CONFIG.pipeSpacing = Math.floor(GAME_CONFIG.pipeSpacing * (GAME_CONFIG.canvasWidth / 800));
+            GAME_CONFIG.pipeGapSize = Math.floor(GAME_CONFIG.pipeGapSize * (GAME_CONFIG.canvasWidth / 800));
+            GAME_CONFIG.pipeSpeed = Math.floor(GAME_CONFIG.pipeSpeed * (GAME_CONFIG.canvasWidth / 800));
+            GAME_CONFIG.maxGapHeightDifference = Math.floor(GAME_CONFIG.maxGapHeightDifference * (GAME_CONFIG.canvasWidth / 800));
             GAME_CONFIG.baseSpeedMultiplier = 0.6;
             GAME_CONFIG.speedAcceleration = 0.00005;
         }
@@ -1842,6 +1843,11 @@ class Game {
                         this.showCharactersModal();
                     }
                 });
+
+                // Двойной клик для открытия описания
+                characterEl.addEventListener('dblclick', () => {
+                    this.showCharacterAbilities(key);
+                });
             } else {
                 // Супер-птицы: проверка условий разблокировки
                 let statusText = '';
@@ -1912,6 +1918,11 @@ class Game {
                         this.characterSystem.selectCharacter(key);
                         this.showCharactersModal();
                     }
+                });
+
+                // Двойной клик для открытия описания
+                characterEl.addEventListener('dblclick', () => {
+                    this.showCharacterAbilities(key);
                 });
 
                 // Обработчик для замка

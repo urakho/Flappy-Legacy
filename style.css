@@ -525,18 +525,19 @@ h3 {
 
     /* Модалки персонажей */
     .skins-list {
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)) !important;
-        gap: 8px;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
+        gap: 6px;
     }
 
     .skin-item {
-        height: 100px !important;
-        padding: 8px !important;
-        font-size: 0.8em;
+        height: 80px !important;
+        padding: 6px !important;
+        font-size: 0.7em;
     }
 
     .skin-item div {
-        font-size: 0.9em;
+        font-size: 0.8em;
+        margin-bottom: 2px;
     }
 
     /* Модалки тем */
