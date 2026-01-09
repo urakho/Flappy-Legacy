@@ -1621,10 +1621,7 @@ class Game {
             GAME_CONFIG.scale = GAME_CONFIG.canvasWidth / 800;
             GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
             GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
-            GAME_CONFIG.pipeSpeed = 5; // Оставляем базовую скорость
             GAME_CONFIG.maxGapHeightDifference = Math.floor(40 * GAME_CONFIG.scale);
-            GAME_CONFIG.baseSpeedMultiplier = 0.75; // Оставляем базовое
-            GAME_CONFIG.speedAcceleration = 0.0001; // Оставляем базовое
         } else {
             GAME_CONFIG.scale = 1;
         }
