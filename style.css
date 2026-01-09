@@ -393,6 +393,8 @@ h3 {
     font-family: Arial, sans-serif;
     position: relative;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    max-height: 80vh;
+    overflow-y: auto;
 }
 
 .modal-close {
@@ -525,19 +527,19 @@ h3 {
 
     /* Модалки персонажей */
     .skins-list {
-        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)) !important;
-        gap: 6px;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) !important;
+        gap: 8px;
     }
 
     .skin-item {
-        height: 80px !important;
-        padding: 6px !important;
-        font-size: 0.7em;
+        height: 150px !important;
+        padding: 10px !important;
+        font-size: 0.8em;
     }
 
     .skin-item div {
-        font-size: 0.8em;
-        margin-bottom: 2px;
+        font-size: 0.9em;
+        margin-bottom: 3px;
     }
 
     /* Модалки тем */

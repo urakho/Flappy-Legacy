@@ -1716,17 +1716,43 @@ class Game {
 
     setupEventListeners() {
         // Старт игры
-        document.getElementById('startBtn').addEventListener('click', () => this.startGame());
+        const startBtn = document.getElementById('startBtn');
+        startBtn.addEventListener('click', () => this.startGame());
+        startBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.startGame();
+        });
 
         // Кнопки меню
-        document.getElementById('charactersBtn').addEventListener('click', () => this.showCharactersModal());
-        document.getElementById('themesBtn').addEventListener('click', () => this.showThemesModal());
+        const charactersBtn = document.getElementById('charactersBtn');
+        charactersBtn.addEventListener('click', () => this.showCharactersModal());
+        charactersBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.showCharactersModal();
+        });
+
+        const themesBtn = document.getElementById('themesBtn');
+        themesBtn.addEventListener('click', () => this.showThemesModal());
+        themesBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.showThemesModal();
+        });
 
         // Retry после game over
-        document.getElementById('retryBtn').addEventListener('click', () => this.startGame());
+        const retryBtn = document.getElementById('retryBtn');
+        retryBtn.addEventListener('click', () => this.startGame());
+        retryBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.startGame();
+        });
 
         // Menu после game over
-        document.getElementById('menuBtn').addEventListener('click', () => this.showMenu());
+        const menuBtn = document.getElementById('menuBtn');
+        menuBtn.addEventListener('click', () => this.showMenu());
+        menuBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.showMenu();
+        });
 
         // Управление игроком
         document.addEventListener('keydown', (e) => {
@@ -1844,6 +1870,19 @@ class Game {
                     }
                 });
 
+                // Touch support for mobile
+                characterEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.characterSystem.ownedCharacters[key]) {
+                        this.characterSystem.selectCharacter(key);
+                        this.showCharactersModal();
+                    } else if (this.characterSystem.canBuyCharacter(key)) {
+                        this.characterSystem.buyCharacter(key);
+                        this.characterSystem.selectCharacter(key);
+                        this.showCharactersModal();
+                    }
+                });
+
                 // Двойной клик для открытия описания
                 characterEl.addEventListener('dblclick', () => {
                     this.showCharacterAbilities(key);
@@ -1920,6 +1959,19 @@ class Game {
                     }
                 });
 
+                // Touch support for mobile
+                characterEl.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.characterSystem.ownedCharacters[key] || this.characterSystem.rentedCharacters[key]) {
+                        this.characterSystem.selectCharacter(key);
+                        this.showCharactersModal();
+                    } else if (this.characterSystem.canBuyCharacter(key)) {
+                        this.characterSystem.buyCharacter(key);
+                        this.characterSystem.selectCharacter(key);
+                        this.showCharactersModal();
+                    }
+                });
+
                 // Двойной клик для открытия описания
                 characterEl.addEventListener('dblclick', () => {
                     this.showCharacterAbilities(key);
@@ -1932,12 +1984,37 @@ class Game {
                         e.stopPropagation();
                         this.showUnlockConditionsModal(characterData.name, characterEl.unlockConditions);
                     });
+                    lockEl.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.showUnlockConditionsModal(characterData.name, characterEl.unlockConditions);
+                    });
                 }
 
                 // Обработчики для кнопок - купить или арендовать
                 const buttons = characterEl.querySelectorAll('button');
                 buttons.forEach((btn) => {
                     btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (btn.textContent.includes('Выбрать')) {
+                            this.characterSystem.selectCharacter(key);
+                            this.showCharactersModal();
+                        } else if (btn.textContent.includes('Купить')) {
+                            if (this.characterSystem.canBuyCharacter(key)) {
+                                this.characterSystem.buyCharacter(key);
+                                this.characterSystem.selectCharacter(key);
+                                this.showCharactersModal();
+                            }
+                        } else if (btn.textContent.includes('Аренд.')) {
+                            if (this.characterSystem.canRentCharacter(key)) {
+                                this.characterSystem.rentCharacter(key);
+                                this.characterSystem.selectCharacter(key);
+                                this.showCharactersModal();
+                            }
+                        }
+                    });
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         if (btn.textContent.includes('Выбрать')) {
                             this.characterSystem.selectCharacter(key);
@@ -2135,6 +2212,38 @@ class Game {
                     alert('Недостаточно гемов!');
                 }
             });
+            reduceBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.characterSystem.totalGems >= 15) {
+                    this.characterSystem.addGems(-15);
+                    this.debuffModifiers[characterKey] = this.debuffModifiers[characterKey] || {};
+                    // Применить понижение на 5%
+                    if (characterData.gravityMultiplier && characterData.gravityMultiplier > 1) {
+                        this.debuffModifiers[characterKey].gravityMultiplier = (this.debuffModifiers[characterKey].gravityMultiplier || 0) - 0.05;
+                    }
+                    if (characterData.speedMultiplier) {
+                        if (characterData.speedMultiplier > 1) {
+                            this.debuffModifiers[characterKey].speedMultiplier = (this.debuffModifiers[characterKey].speedMultiplier || 0) - 0.05;
+                        } else if (characterData.speedMultiplier < 1) {
+                            this.debuffModifiers[characterKey].speedMultiplier = (this.debuffModifiers[characterKey].speedMultiplier || 0) + 0.05;
+                        }
+                    }
+                    if (characterData.gapMultiplier && characterData.gapMultiplier < 1) {
+                        this.debuffModifiers[characterKey].gapMultiplier = (this.debuffModifiers[characterKey].gapMultiplier || 0) + 0.05;
+                    }
+                    if (characterData.coinMultiplier && characterData.coinMultiplier < 1) {
+                        this.debuffModifiers[characterKey].coinMultiplier = (this.debuffModifiers[characterKey].coinMultiplier || 0) + 0.05;
+                    }
+                    if (characterData.pipeDistanceMultiplier && characterData.pipeDistanceMultiplier < 1) {
+                        this.debuffModifiers[characterKey].pipeDistanceMultiplier = (this.debuffModifiers[characterKey].pipeDistanceMultiplier || 0) + 0.05;
+                    }
+                    this.renderUI(); // Обновить отображение гемов
+                    alert('Дебаффы понижены на 5% для этой игры!');
+                    modal.style.display = 'none';
+                } else {
+                    alert('Недостаточно гемов!');
+                }
+            });
         }
 
         // Специальные кнопки для облака
@@ -2154,9 +2263,35 @@ class Game {
                         alert('Недостаточно гемов!');
                     }
                 });
+                upgradeBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    if (this.characterSystem.totalGems >= 15) { // Стоимость повышения
+                        this.characterSystem.addGems(-15);
+                        this.debuffModifiers[characterKey] = this.debuffModifiers[characterKey] || {};
+                        this.debuffModifiers[characterKey].gravityMultiplier = -0.05; // Дополнительно -5% (итого -30%)
+                        this.renderUI();
+                        alert('Способность повышена до -30% гравитации!');
+                        modal.style.display = 'none';
+                    } else {
+                        alert('Недостаточно гемов!');
+                    }
+                });
             }
             if (downgradeBtn) {
                 downgradeBtn.addEventListener('click', () => {
+                    if (this.characterSystem.totalGems >= 15) { // Стоимость понижения
+                        this.characterSystem.addGems(-15);
+                        this.debuffModifiers[characterKey] = this.debuffModifiers[characterKey] || {};
+                        this.debuffModifiers[characterKey].gravityMultiplier = +0.05; // +5% (итого -20%)
+                        this.renderUI();
+                        alert('Способность понижена до -20% гравитации!');
+                        modal.style.display = 'none';
+                    } else {
+                        alert('Недостаточно гемов!');
+                    }
+                });
+                downgradeBtn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
                     if (this.characterSystem.totalGems >= 15) { // Стоимость понижения
                         this.characterSystem.addGems(-15);
                         this.debuffModifiers[characterKey] = this.debuffModifiers[characterKey] || {};
