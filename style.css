@@ -435,6 +435,40 @@ h3 {
     line-height: 1.5;
 }
 
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.modal-btn {
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+.modal-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.difficulty-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.difficulty-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
 .themes-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -619,6 +653,7 @@ h3 {
     .modal-close {
         top: 5px;
         right: 5px;
-        font-size: 1.5em;
+        font-size: 32px;
+        color: red;
     }
 }

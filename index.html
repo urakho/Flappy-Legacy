@@ -22,8 +22,7 @@
             <button id="startBtn" class="btn btn-primary">СТАРТ</button>
             
             <div class="menu-buttons">
-                <button id="charactersBtn" class="btn btn-secondary">ПЕРСОНАЖИ</button>
-                <button id="themesBtn" class="btn btn-secondary">ТЕМЫ</button>
+                <button id="settingsBtn" class="btn btn-secondary">Настройки</button>
                 <button id="resetBtn" class="btn btn-danger">ОЧИСТИТЬ</button>
             </div>
         </div>
@@ -86,11 +85,33 @@
         </div>
     </div>
 
+    <!-- Модальное окно для настроек -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Настройки</h2>
+            <div class="modal-body">
+                <button id="modalCharactersBtn" class="modal-btn">Персонажи</button>
+                <button id="modalThemesBtn" class="modal-btn">Темы</button>
+                <button id="modalDifficultyBtn" class="modal-btn">Сложность</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Модальное окно для условий разблокировки -->
     <div id="unlockConditionsModal" class="modal">
         <div class="modal-content">
             <span class="modal-close">&times;</span>
             <div id="unlockConditionsText"></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для сложности -->
+    <div id="difficultyModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2>Выбор сложности</h2>
+            <div id="difficultyModalButtons" class="difficulty-buttons"></div>
         </div>
     </div>
 

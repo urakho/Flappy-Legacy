@@ -396,32 +396,26 @@ class Bird {
 
     // Обновление положения и физики
     update(speedMultiplier = 1) {
-        // Способность первородной птицы / режим ярости Великого Феникса
-        if (this.straightFlightActive || this.phoenixFireMode) {
+        // Режим прямого полёта
+        if (this.game.straightMode) {
+            this.velocityY = 0;
+        } else if (this.straightFlightActive || this.phoenixFireMode) {
             this.velocityY = 0; // Отключить гравитацию
-            // Фиксированная вертикальная позиция
-            // Горизонтальная скорость обычная
         } else {
             // Гравитация
             this.velocityY += this.gravity * speedMultiplier;
         }
         this.y += this.velocityY * speedMultiplier;
 
-        // Ограничение максимальной скорости
-        if (this.velocityY > 15) {
-            this.velocityY = 15;
-        }
-
-        // Поворот при движении (кроме Феникса в режиме ярости)
-        if (!this.phoenixFireMode) {
+        // Поворот при движении (кроме режима прямого полёта)
+        if (!this.game.straightMode) {
             if (this.velocityY > 0) {
                 this.rotation = Math.min(0.5, this.rotation + 0.05);
             } else {
                 this.rotation = Math.max(-0.3, this.rotation - 0.05);
             }
         } else {
-            // Феникс в ярости: горизонтальное положение
-            this.rotation = 0;
+            this.rotation = 0; // Горизонтальное положение в режиме прямого полёта
         }
 
         // Обновление эффектов
@@ -1136,6 +1130,9 @@ class PipeManager {
         this.nextSpawnX = 200;
         this.lastGapCenter = GAME_CONFIG.canvasHeight / 2; // память последнего зазора
         this.pipeIdCounter = 0; // счетчик ID труб
+        this.totalPipesSpawned = 20; // общее количество созданных труб
+        this.pipeSpawnDelay = 300; // задержка перед началом спавна труб (5 секунд при 60 FPS)
+        this.spawnPipes = false; // флаг для начала спавна труб после первого прыжка
     }
 
     update(speedMultiplier = 1) {
@@ -1165,42 +1162,60 @@ class PipeManager {
         });
 
         // Генерация новых труб
-        const pipeSpacing = GAME_CONFIG.pipeSpacing * (this.game.skin.pipeDistanceMultiplier || 1);
-        if (this.pipes.length === 0 || this.pipes[this.pipes.length - 1].x < GAME_CONFIG.canvasWidth - pipeSpacing) {
-            this.spawnPipe();
+        if (!this.spawnPipes || this.game.straightMode) return;
+        if (this.pipeSpawnDelay > 0) {
+            this.pipeSpawnDelay--;
+        } else {
+            const pipeSpacing = GAME_CONFIG.pipeSpacing * (this.game.skin.pipeDistanceMultiplier || 1);
+            if (this.pipes.length === 0 || this.pipes[this.pipes.length - 1].x < GAME_CONFIG.canvasWidth - pipeSpacing) {
+                this.spawnPipe();
+            }
         }
     }
 
     spawnPipe() {
-        const gapSize = GAME_CONFIG.pipeGapSize * (this.game.skin.gapMultiplier || 1);
-        const minTopHeight = 60;      // минимум для верхней трубы (видна)
-        const maxTopHeight = GAME_CONFIG.canvasHeight - gapSize - 60; // минимум для нижней трубы (видна)
-        
-        // Плавное изменение высоты зазора (не более maxGapHeightDifference пикселей)
-        const maxDiff = GAME_CONFIG.maxGapHeightDifference;
-        const minNewGap = Math.max(minTopHeight, this.lastGapCenter - maxDiff);
-        const maxNewGap = Math.min(maxTopHeight, this.lastGapCenter + maxDiff);
-        
-        // Убедимся, что диапазон корректен
-        let topHeight;
-        if (minNewGap <= maxNewGap) {
-            topHeight = minNewGap + Math.random() * (maxNewGap - minNewGap);
-        } else {
-            // Если диапазон неверен, выбираем точку в середине
-            topHeight = (minNewGap + maxNewGap) / 2;
-        }
-        
-        // Гарантируем, что обе трубы видны
-        topHeight = Math.max(minTopHeight, Math.min(topHeight, maxTopHeight));
-        
-        const gapCenter = topHeight + gapSize / 2;
-        this.lastGapCenter = gapCenter;
+        this.totalPipesSpawned++;
+        if (this.totalPipesSpawned > 20) {
+            // Размер зазора в зависимости от сложности
+            let startGap, decreasePerBatch, batchSize, minGap;
+            if (this.game.difficulty === 'easy') {
+                startGap = 350; decreasePerBatch = 10; batchSize = 20; minGap = 200;
+            } else if (this.game.difficulty === 'hard') {
+                startGap = 250; decreasePerBatch = 50; batchSize = 10; minGap = 50;
+            } else { // normal
+                startGap = 300; decreasePerBatch = 25; batchSize = 20; minGap = 100;
+            }
+            const batch = Math.floor((this.totalPipesSpawned - 1) / batchSize);
+            const baseGapSize = Math.max(minGap, startGap - batch * decreasePerBatch);
+            const gapSize = baseGapSize * (this.game.skin.gapMultiplier || 1);
+            const minTopHeight = 60;      // минимум для верхней трубы (видна)
+            const maxTopHeight = GAME_CONFIG.canvasHeight - gapSize - 60; // минимум для нижней трубы (видна)
+            
+            // Плавное изменение высоты зазора (не более maxGapHeightDifference пикселей)
+            const maxDiff = this.game.difficulty === 'easy' ? 75 : this.game.difficulty === 'normal' ? 100 : 120;
+            const minNewGap = Math.max(minTopHeight, this.lastGapCenter - maxDiff);
+            const maxNewGap = Math.min(maxTopHeight, this.lastGapCenter + maxDiff);
+            
+            // Убедимся, что диапазон корректен
+            let topHeight;
+            if (minNewGap <= maxNewGap) {
+                topHeight = minNewGap + Math.random() * (maxNewGap - minNewGap);
+            } else {
+                // Если диапазон неверен, выбираем точку в середине
+                topHeight = (minNewGap + maxNewGap) / 2;
+            }
+            
+            // Гарантируем, что обе трубы видны
+            topHeight = Math.max(minTopHeight, Math.min(topHeight, maxTopHeight));
+            
+            const gapCenter = topHeight + gapSize / 2;
+            this.lastGapCenter = gapCenter;
 
-        // Проверяем, должна ли быть огненная стена для Феникса
-        const isFireWall = this.game.bird.fireWallCount >= 20 && this.game.bird.totalFireWalls < 2;
-        if (isFireWall) {
-            this.game.bird.fireWallCount = 0;
-            this.game.bird.totalFireWalls++;
+            // Проверяем, должна ли быть огненная стена для Феникса
+            const isFireWall = this.game.bird.fireWallCount >= 20 && this.game.bird.totalFireWalls < 2;
+            if (isFireWall) {
+                this.game.bird.fireWallCount = 0;
+                this.game.bird.totalFireWalls++;
         }
         if (isFireWall) {
             this.game.bird.fireWallCount = 0;
@@ -1219,6 +1234,7 @@ class PipeManager {
             isAstral: this.game.bird.astralCount > 0 ? (this.game.bird.astralCount--, true) : false,
             isFireWall: isFireWall // Флаг огненной стены
         });
+    }
     }
 
     draw(ctx, theme) {
@@ -1654,6 +1670,7 @@ class Game {
         this.ashParticles = []; // Частицы пепла для темы Ash
         this.loadThemeImages();
         this.state = 'menu'; // 'menu', 'playing', 'gameover'
+        this.difficulty = localStorage.getItem('difficulty') || 'normal';
         this.score = 0;
         this.runCoins = 0;
         this.runGems = 0;
@@ -1669,6 +1686,9 @@ class Game {
         this.slowMotionTimeLeft = 0;
         this.normalDeltaTime = 0.016; // ~60 FPS
         this.slowMotionFactor = 0.1; // 10x замедление
+
+        this.firstJump = false; // флаг первого прыжка
+        this.straightMode = true; // режим прямого полёта
 
         this.setupEventListeners();
         this.renderUI();
@@ -1741,19 +1761,66 @@ class Game {
         });
 
         // Кнопки меню
-        const charactersBtn = document.getElementById('charactersBtn');
-        charactersBtn.addEventListener('click', () => this.showCharactersModal());
-        charactersBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.showCharactersModal();
-        });
+        const settingsBtn = document.getElementById('settingsBtn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', () => this.showSettingsModal());
+            settingsBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.showSettingsModal();
+            });
+        }
 
-        const themesBtn = document.getElementById('themesBtn');
-        themesBtn.addEventListener('click', () => this.showThemesModal());
-        themesBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            this.showThemesModal();
-        });
+        // Кнопки в модалке настроек
+        const modalCharactersBtn = document.getElementById('modalCharactersBtn');
+        if (modalCharactersBtn) {
+            modalCharactersBtn.addEventListener('click', () => {
+                document.getElementById('settingsModal').style.display = 'none';
+                this.showCharactersModal();
+            });
+        }
+
+        const modalThemesBtn = document.getElementById('modalThemesBtn');
+        if (modalThemesBtn) {
+            modalThemesBtn.addEventListener('click', () => {
+                document.getElementById('settingsModal').style.display = 'none';
+                this.showThemesModal();
+            });
+        }
+
+        const modalDifficultyBtn = document.getElementById('modalDifficultyBtn');
+        if (modalDifficultyBtn) {
+            modalDifficultyBtn.addEventListener('click', () => {
+                this.showDifficultyModal();
+            });
+            modalDifficultyBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.showDifficultyModal();
+            });
+        }
+
+        // Close settings modal
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal) {
+            const closeSettingsModal = () => settingsModal.style.display = 'none';
+            settingsModal.querySelector('.modal-close').addEventListener('click', closeSettingsModal);
+            window.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    closeSettingsModal();
+                }
+            });
+        }
+
+        // Close difficulty modal
+        const difficultyModal = document.getElementById('difficultyModal');
+        if (difficultyModal) {
+            const closeDifficultyModal = () => difficultyModal.style.display = 'none';
+            difficultyModal.querySelector('.modal-close').addEventListener('click', closeDifficultyModal);
+            window.addEventListener('click', (e) => {
+                if (e.target === difficultyModal) {
+                    closeDifficultyModal();
+                }
+            });
+        }
 
         // Кнопка очистки (только на мобильных)
         const resetBtn = document.getElementById('resetBtn');
@@ -1768,6 +1835,9 @@ class Game {
                 resetFunction();
             });
         }
+
+        // Кнопки сложности
+        // this.setupDifficultyButtons(); // Теперь в модалке
 
         // Retry после game over
         const retryBtn = document.getElementById('retryBtn');
@@ -1795,8 +1865,14 @@ class Game {
                 if (!isConsoleActive) {
                     e.preventDefault();
                     if (this.state === 'playing') {
-                        this.bird.jump();
-                        this.bird.addFireEffect();
+                        if (this.straightMode && this.elapsedTime > 1) {
+                            this.straightMode = false;
+                            this.pipeManager.spawnPipes = true;
+                            this.pipeManager.pipeSpawnDelay = 300;
+                        } else {
+                            this.bird.jump();
+                            this.bird.addFireEffect();
+                        }
                     }
                 }
             }
@@ -1807,16 +1883,28 @@ class Game {
 
         document.addEventListener('click', () => {
             if (this.state === 'playing') {
-                this.bird.jump();
-                this.bird.addFireEffect();
+                if (this.straightMode && this.elapsedTime > 1) {
+                    this.straightMode = false;
+                    this.pipeManager.spawnPipes = true;
+                    this.pipeManager.pipeSpawnDelay = 300;
+                } else {
+                    this.bird.jump();
+                    this.bird.addFireEffect();
+                }
             }
         });
 
         // Сенсорное управление
         this.canvas.addEventListener('touchstart', () => {
             if (this.state === 'playing') {
-                this.bird.jump();
-                this.bird.addFireEffect();
+                if (this.straightMode && this.elapsedTime > 1) {
+                    this.straightMode = false;
+                    this.pipeManager.spawnPipes = true;
+                    this.pipeManager.pipeSpawnDelay = 300;
+                } else {
+                    this.bird.jump();
+                    this.bird.addFireEffect();
+                }
             }
         });
 
@@ -1845,31 +1933,6 @@ class Game {
                 location.reload();
             });
         }
-
-        const resetNoBtn = document.getElementById('resetNoBtn');
-        if (resetNoBtn) {
-            resetNoBtn.addEventListener('click', () => {
-                document.getElementById('resetModal').style.display = 'none';
-            });
-            resetNoBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                document.getElementById('resetModal').style.display = 'none';
-            });
-        }
-
-        // Закрытие модалки по крестику
-        const resetModalClose = document.querySelector('#resetModal .modal-close');
-        if (resetModalClose) {
-            resetModalClose.onclick = () => document.getElementById('resetModal').style.display = 'none';
-        }
-
-        // Закрытие по клику вне модалки
-        window.onclick = (e) => {
-            const resetModal = document.getElementById('resetModal');
-            if (e.target === resetModal) {
-                resetModal.style.display = 'none';
-            }
-        };
     }
 
     renderUI() {
@@ -1939,6 +2002,7 @@ class Game {
                     <div style="font-weight: bold; margin-bottom: 5px;">${characterData.name}</div>
                     <div style="font-size: 12px; color: #e4c200ff; margin-bottom: 5px;">${characterData.price === 0 ? 'Бесплатно' : characterData.price + ' 💰'}</div>
                     <div style="font-size: 11px; color: ${this.characterSystem.ownedCharacters[key] ? '#ffd700' : '#999'}; margin-bottom: 5px;">${statusText}</div>
+                    ${window.innerWidth <= 768 ? '<button class="description-btn" style="width: 100%; padding: 3px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; margin-top: 5px;">Описание</button>' : ''}
                 `;
 
                 characterEl.addEventListener('click', () => {
@@ -1964,6 +2028,20 @@ class Game {
                         this.showCharactersModal();
                     }
                 });
+
+                // Обработчик для кнопки описания на мобильных
+                const descBtn = characterEl.querySelector('.description-btn');
+                if (descBtn) {
+                    descBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showCharacterAbilities(key);
+                    });
+                    descBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.showCharacterAbilities(key);
+                    });
+                }
 
                 // Двойной клик для открытия описания
                 characterEl.addEventListener('dblclick', () => {
@@ -2027,6 +2105,7 @@ class Game {
                     <div style="font-size: 11px; color: #e4c200ff; margin-bottom: 3px;">${priceText}</div>
                     <div style="font-size: 10px; color: ${this.characterSystem.ownedCharacters[key] || this.characterSystem.rentedCharacters[key] ? '#ffd700' : '#999'}; margin-bottom: 3px;">${statusText}</div>
                     ${buttonsHtml}
+                    ${window.innerWidth <= 768 ? '<button class="description-btn" style="width: 100%; padding: 2px; background: #2196F3; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 9px; margin-top: 3px;">Описание</button>' : ''}
                 `;
 
                 // Клик на скин - купить или выбрать
@@ -2053,6 +2132,20 @@ class Game {
                         this.showCharactersModal();
                     }
                 });
+
+                // Обработчик для кнопки описания на мобильных
+                const descBtn = characterEl.querySelector('.description-btn');
+                if (descBtn) {
+                    descBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.showCharacterAbilities(key);
+                    });
+                    descBtn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.showCharacterAbilities(key);
+                    });
+                }
 
                 // Двойной клик для открытия описания
                 characterEl.addEventListener('dblclick', () => {
@@ -2464,6 +2557,7 @@ class Game {
         this.currentSpeedMultiplier = GAME_CONFIG.baseSpeedMultiplier;
         this.pipeCount = 0;
         this.debuffModifiers = {};
+        this.straightMode = true; // включить режим прямого полёта
 
         this.bird = new Bird(GAME_CONFIG.canvasWidth / 4, GAME_CONFIG.canvasHeight / 2, this.skin, this.themeSystem.currentTheme, this);
         this.pipeManager = new PipeManager(this);
@@ -2829,6 +2923,83 @@ class Game {
         this.renderUI();
     }
 
+
+
+
+
+    showSettingsModal() {
+        const modal = document.getElementById('settingsModal');
+        modal.style.display = 'block';
+        // Update difficulty button text
+        const modalDifficultyBtn = document.getElementById('modalDifficultyBtn');
+        if (modalDifficultyBtn) {
+            modalDifficultyBtn.textContent = 'Сложность';
+        }
+    }
+
+    showDifficultyModal() {
+        const modal = document.getElementById('difficultyModal');
+        modal.style.display = 'block';
+        // Setup difficulty buttons if not already done
+        const diffContainer = modal.querySelector('#difficultyModalButtons');
+        if (diffContainer && !diffContainer.hasChildNodes()) {
+            this.setupDifficultyButtonsInModal(diffContainer);
+        }
+    }
+
+    setupDifficultyButtonsInModal(container) {
+        const difficulties = [
+            { key: 'easy', label: 'Лёгкий', color: '#4CAF50' },
+            { key: 'normal', label: 'Нормальный', color: '#FF9800' },
+            { key: 'hard', label: 'Сложный', color: '#F44336' }
+        ];
+
+        // Find current difficulty index
+        const currentIndex = difficulties.findIndex(d => d.key === this.difficulty);
+        const currentDiff = difficulties[currentIndex];
+
+        const btn = document.createElement('button');
+        btn.textContent = currentDiff.label;
+        btn.style.cssText = `
+            padding: 15px;
+            border: 2px solid white;
+            border-radius: 10px;
+            background: linear-gradient(135deg, ${currentDiff.color} 0%, ${currentDiff.color}80 100%);
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 50%;
+            margin: 0 auto;
+            display: block;
+            transition: background 0.3s;
+        `;
+        btn.addEventListener('click', () => {
+            const currentIndexNow = difficulties.findIndex(d => d.key === this.difficulty);
+            const nextIndex = (currentIndexNow + 1) % difficulties.length;
+            const nextDiff = difficulties[nextIndex];
+            this.difficulty = nextDiff.key;
+            localStorage.setItem('difficulty', nextDiff.key);
+            btn.textContent = nextDiff.label;
+            btn.style.background = `linear-gradient(135deg, ${nextDiff.color} 0%, ${nextDiff.color}80 100%)`;
+        });
+        btn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const currentIndexNow = difficulties.findIndex(d => d.key === this.difficulty);
+            const nextIndex = (currentIndexNow + 1) % difficulties.length;
+            const nextDiff = difficulties[nextIndex];
+            this.difficulty = nextDiff.key;
+            localStorage.setItem('difficulty', nextDiff.key);
+            btn.textContent = nextDiff.label;
+            btn.style.background = `linear-gradient(135deg, ${nextDiff.color} 0%, ${nextDiff.color}80 100%)`;
+        });
+        container.appendChild(btn);
+    }
+
+
+
+
+
     update(speedMultiplier = 1) {
         if (this.state !== 'playing') return;
 
@@ -2843,14 +3014,15 @@ class Game {
 
         // Обновление скорости с ускорением (кроме ниндзи, который остаётся на 0.75)
         const elapsedTime = Date.now() - this.startTime;
+        this.elapsedTime = elapsedTime / 1000;
         if (this.skin.name !== 'Ниндзя') {
             if (this.isMobile) {
-                // Для мобильных: от 0.5 до 2.0
-                this.currentSpeedMultiplier = 0.5 + (elapsedTime * 0.00075 / 1000);
+                // Для мобильных: от 0.35 до 2.0 (замедлено на 30% в начале)
+                this.currentSpeedMultiplier = 0.35 + (elapsedTime * 0.00075 / 1000);
                 this.currentSpeedMultiplier = Math.min(this.currentSpeedMultiplier, 2.0);
             } else {
-                // Для десктопа: от 1.0 до 10.0
-                this.currentSpeedMultiplier = 1.0 + (elapsedTime * 0.005 / 1000);
+                // Для десктопа: от 0.7 до 10.0 (замедлено на 30% в начале)
+                this.currentSpeedMultiplier = 0.7 + (elapsedTime * 0.005 / 1000);
                 this.currentSpeedMultiplier = Math.min(this.currentSpeedMultiplier, 10.0);
             }
         } else {
@@ -2967,7 +3139,11 @@ class Game {
 
             // Спавн монет в проёме (вероятность зависит от скина)
             const skin = (this.game && this.game.skin) || CHARACTERS.normal;
-            const spawnChance = 0.4 * (skin.coinMultiplier || 1);
+            let spawnChance = 0.4 * (skin.coinMultiplier || 1);
+            const elapsed = this.game && this.game.startTime ? (Date.now() - this.game.startTime) / 1000 : 0;
+            if (elapsed < 5) {
+                spawnChance *= 0.25; // уменьшить вероятность в 4 раза в первые 5 секунд
+            }
             if (!pipe.hasSpawnedCoin && Math.random() < spawnChance) {
                 pipe.hasSpawnedCoin = true;
                 this.coinManager.spawnCoin(pipe.x, pipe.topHeight, pipe.gapSize);
