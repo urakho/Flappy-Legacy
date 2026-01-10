@@ -395,7 +395,7 @@ class Bird {
     }
 
     // Обновление положения и физики
-    update() {
+    update(speedMultiplier = 1) {
         // Способность первородной птицы / режим ярости Великого Феникса
         if (this.straightFlightActive || this.phoenixFireMode) {
             this.velocityY = 0; // Отключить гравитацию
@@ -403,9 +403,9 @@ class Bird {
             // Горизонтальная скорость обычная
         } else {
             // Гравитация
-            this.velocityY += this.gravity;
+            this.velocityY += this.gravity * speedMultiplier;
         }
-        this.y += this.velocityY;
+        this.y += this.velocityY * speedMultiplier;
 
         // Ограничение максимальной скорости
         if (this.velocityY > 15) {
@@ -1138,11 +1138,11 @@ class PipeManager {
         this.pipeIdCounter = 0; // счетчик ID труб
     }
 
-    update() {
+    update(speedMultiplier = 1) {
         // Скорость зависит от скина и текущего ускорения
         const skinSpeedMult = this.game.skin.speedMultiplier || 1;
         const gameSpeedMult = this.game.currentSpeedMultiplier || GAME_CONFIG.baseSpeedMultiplier;
-        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult;
+        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
 
         // Движение труб
         for (let pipe of this.pipes) {
@@ -1322,11 +1322,11 @@ class CoinManager {
         this.magnetRadius = game.skin.magnetRadius || 0;
     }
 
-    update() {
+    update(speedMultiplier = 1) {
         // Скорость монет зависит от скина и текущего ускорения
         const skinSpeedMult = this.game.skin.speedMultiplier || 1;
         const gameSpeedMult = this.game.currentSpeedMultiplier || GAME_CONFIG.baseSpeedMultiplier;
-        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult;
+        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
 
         // Движение монет
         for (let coin of this.coins) {
@@ -1614,9 +1614,10 @@ class ThemeSystem {
 // ==================== ГЛАВНЫЙ КЛАСС ИГРЫ ====================
 class Game {
     constructor() {
-        // Адаптация для мобильных устройств (определяем по userAgent и размеру экрана)
+        console.log('Game constructor started');
+        // Адаптация для мобильных устройств (только масштабирование, без ускорения)
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const isAccelerated = isMobile && screen.width < 1280;
+        const isAccelerated = false; // Убрали ускорение, одинаковая скорость для всех
         console.log('Device detection:', {
             userAgent: navigator.userAgent,
             platform: navigator.platform,
@@ -1627,7 +1628,7 @@ class Game {
             isMobile,
             isAccelerated
         });
-        if (isAccelerated) {
+        if (isMobile) {
             const aspectRatio = 800 / 600;
             GAME_CONFIG.canvasWidth = Math.min(window.innerWidth * 0.9, 800);
             GAME_CONFIG.canvasHeight = GAME_CONFIG.canvasWidth / aspectRatio;
@@ -1635,9 +1636,7 @@ class Game {
             GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
             GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
             GAME_CONFIG.maxGapHeightDifference = 75;
-            GAME_CONFIG.pipeSpeed = 5 * 2.0;
-            GAME_CONFIG.jumpPower = 5 * 0.75;
-            GAME_CONFIG.gravity = 0.2 * 1.85; 
+            // Убрали изменения скорости, гравитации и прыжка - одинаково для всех
         } else {
             GAME_CONFIG.scale = 1;
         }
@@ -2828,12 +2827,12 @@ class Game {
         this.renderUI();
     }
 
-    update() {
+    update(speedMultiplier = 1) {
         if (this.state !== 'playing') return;
 
         // Обновление замедления времени (Эхо)
         if (this.slowMotionActive) {
-            this.slowMotionTimeLeft -= 16; // Примерно 16ms за фрейм
+            this.slowMotionTimeLeft -= 16 * speedMultiplier; // Примерно 16ms за фрейм
             if (this.slowMotionTimeLeft <= 0) {
                 this.slowMotionActive = false;
                 this.slowMotionTimeLeft = 0;
@@ -2859,7 +2858,7 @@ class Game {
         }
 
         // Обновление птицы
-        this.bird.update();
+        this.bird.update(speedMultiplier);
         this.bird.addFireEffect();
         
         // Дополнительный огонь для Феникса в режиме ярости
@@ -2870,8 +2869,8 @@ class Game {
         this.bird.addSparkleEffect();
 
         // Обновление труб и монет
-        this.pipeManager.update();
-        this.coinManager.update();
+        this.pipeManager.update(speedMultiplier);
+        this.coinManager.update(speedMultiplier);
 
         // Автопилот робота и способности
         this.updateAbilities();
@@ -3119,10 +3118,19 @@ class Game {
         }
     }
 
-    gameLoop() {
-        this.update();
+    gameLoop(currentTime = performance.now()) {
+        if (!this.lastTime) this.lastTime = currentTime;
+        const deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+
+        // Ограничить deltaTime для стабильности (макс 32ms для ~30 FPS min)
+        const clampedDelta = Math.min(deltaTime, 32);
+        const targetDelta = 1000 / 60; // 60 FPS
+        const speedMultiplier = clampedDelta / targetDelta;
+
+        this.update(speedMultiplier);
         this.draw();
-        requestAnimationFrame(() => this.gameLoop());
+        requestAnimationFrame((time) => this.gameLoop(time));
     }
 }
 
