@@ -7,7 +7,7 @@ const GAME_CONFIG = {
     pipeSpeed: 5,           // скорость движения труб (базовая, 0.75 на старте)
     pipeSpacing: 200,       // минимальное расстояние между трубами
     pipeGapSize: 180,       // размер проёма между трубами (увеличено до 180)
-    maxGapHeightDifference: 100, // максимальное изменение высоты зазора между соседними трубами
+    maxGapHeightDifference: 75, // максимальное изменение высоты зазора между соседними трубами
     baseSpeedMultiplier: 0.75,  // базовый множитель скорости (замедление на 25%)
     speedAcceleration: 0.0001,  // ускорение скорости со временем
 };
@@ -1621,10 +1621,10 @@ class Game {
             GAME_CONFIG.scale = GAME_CONFIG.canvasWidth / 800;
             GAME_CONFIG.pipeSpacing = Math.floor(200 * GAME_CONFIG.scale);
             GAME_CONFIG.pipeGapSize = Math.floor(180 * GAME_CONFIG.scale);
-            GAME_CONFIG.maxGapHeightDifference = 100;
-            GAME_CONFIG.pipeSpeed = 5 * 1.75;
+            GAME_CONFIG.maxGapHeightDifference = 75;
+            GAME_CONFIG.pipeSpeed = 5 * 2.0;
             GAME_CONFIG.jumpPower = 5 * 0.75;
-            GAME_CONFIG.gravity = 0.2 * 1.75; 
+            GAME_CONFIG.gravity = 0.2 * 1.85; 
         } else {
             GAME_CONFIG.scale = 1;
         }
