@@ -1448,7 +1448,7 @@ class CharacterSystem {
     }
 
     canRentCharacter(characterKey) {
-        return !this.ownedCharacters[characterKey] && !this.rentedCharacters[characterKey] && Math.floor(CHARACTERS[characterKey].price * 0.25) <= this.totalCoins;
+        return !this.ownedCharacters[characterKey] && !this.rentedCharacters[characterKey];
     }
 
     buyCharacter(characterKey) {
@@ -1463,8 +1463,9 @@ class CharacterSystem {
     }
 
     rentCharacter(characterKey) {
-        if (this.canRentCharacter(characterKey)) {
-            this.totalCoins -= Math.floor(CHARACTERS[characterKey].price * 0.25);
+        const rentPrice = Math.floor(CHARACTERS[characterKey].price * 0.25);
+        if (this.canRentCharacter(characterKey) && rentPrice <= this.totalCoins) {
+            this.totalCoins -= rentPrice;
             this.rentedCharacters[characterKey] = true;
             this.saveTotalCoins();
             this.saveRentedCharacters();
@@ -2074,10 +2075,11 @@ class Game {
                                 this.showCharactersModal();
                             }
                         } else if (btn.textContent.includes('Аренд.')) {
-                            if (this.characterSystem.canRentCharacter(key)) {
-                                this.characterSystem.rentCharacter(key);
+                            if (this.characterSystem.rentCharacter(key)) {
                                 this.characterSystem.selectCharacter(key);
                                 this.showCharactersModal();
+                            } else {
+                                alert('Недостаточно монет для аренды!');
                             }
                         }
                     });
@@ -2094,10 +2096,11 @@ class Game {
                                 this.showCharactersModal();
                             }
                         } else if (btn.textContent.includes('Аренд.')) {
-                            if (this.characterSystem.canRentCharacter(key)) {
-                                this.characterSystem.rentCharacter(key);
+                            if (this.characterSystem.rentCharacter(key)) {
                                 this.characterSystem.selectCharacter(key);
                                 this.showCharactersModal();
+                            } else {
+                                alert('Недостаточно монет для аренды!');
                             }
                         }
                     });
