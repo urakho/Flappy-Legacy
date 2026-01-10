@@ -2,14 +2,14 @@
 const GAME_CONFIG = {
     canvasWidth: 800,
     canvasHeight: 600,
-    gravity: 0.2,          // базовая гравитация
-    jumpPower: 5,           // мощность прыжка (уменьшена)
-    pipeSpeed: 5,           // скорость движения труб (базовая, 0.75 на старте)
+    gravity: 0.75,          // базовая гравитация
+    jumpPower: 10,           // мощность прыжка
+    pipeSpeed: 10,           // скорость движения труб (базовая, 0.8 на старте)
     pipeSpacing: 200,       // минимальное расстояние между трубами
-    pipeGapSize: 180,       // размер проёма между трубами (увеличено до 180)
+    pipeGapSize: 180,       // размер проёма между трубами
     maxGapHeightDifference: 75, // максимальное изменение высоты зазора между соседними трубами
-    baseSpeedMultiplier: 0.75,  // базовый множитель скорости (замедление на 25%)
-    speedAcceleration: 0.0001,  // ускорение скорости со временем
+    baseSpeedMultiplier: 0.8,  // базовый множитель скорости
+    speedAcceleration: 0.005,  // ускорение скорости со временем
 };
 
 // ==================== СИСТЕМА ПЕРСОНАЖЕЙ ====================
@@ -1641,6 +1641,8 @@ class Game {
             GAME_CONFIG.scale = 1;
         }
 
+        this.isMobile = isMobile;
+
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.resizeCanvas();
@@ -2842,14 +2844,18 @@ class Game {
         // Обновление скорости с ускорением (кроме ниндзи, который остаётся на 0.75)
         const elapsedTime = Date.now() - this.startTime;
         if (this.skin.name !== 'Ниндзя') {
-            // Постепенное ускорение от 0.75 до 1.0
-            this.currentSpeedMultiplier = GAME_CONFIG.baseSpeedMultiplier + 
-                (elapsedTime * GAME_CONFIG.speedAcceleration / 1000);
-            // Максимум 1.0 (нормальная скорость)
-            this.currentSpeedMultiplier = Math.min(this.currentSpeedMultiplier, 1.0);
+            if (this.isMobile) {
+                // Для мобильных: от 0.5 до 2.0
+                this.currentSpeedMultiplier = 0.5 + (elapsedTime * 0.00075 / 1000);
+                this.currentSpeedMultiplier = Math.min(this.currentSpeedMultiplier, 2.0);
+            } else {
+                // Для десктопа: от 1.0 до 10.0
+                this.currentSpeedMultiplier = 1.0 + (elapsedTime * 0.005 / 1000);
+                this.currentSpeedMultiplier = Math.min(this.currentSpeedMultiplier, 10.0);
+            }
         } else {
             // Ниндзя всегда остаётся на 0.75
-            this.currentSpeedMultiplier = GAME_CONFIG.baseSpeedMultiplier;
+            this.currentSpeedMultiplier = 0.75;
         }
         
         // Применить замедление времени
