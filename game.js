@@ -1614,8 +1614,9 @@ class ThemeSystem {
 // ==================== ГЛАВНЫЙ КЛАСС ИГРЫ ====================
 class Game {
     constructor() {
-        // Адаптация для мобильных устройств
-        if (window.innerWidth < 768) {
+        // Адаптация для мобильных устройств (определяем по userAgent)
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
             const aspectRatio = 800 / 600;
             GAME_CONFIG.canvasWidth = Math.min(window.innerWidth * 0.9, 800);
             GAME_CONFIG.canvasHeight = GAME_CONFIG.canvasWidth / aspectRatio;
