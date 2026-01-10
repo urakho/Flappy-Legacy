@@ -425,13 +425,13 @@ class Bird {
         }
 
         // Обновление эффектов
-        this.updateFireParticles();
-        this.updateAshParticles();
-        this.updateSparkles();
+        this.updateFireParticles(speedMultiplier);
+        this.updateAshParticles(speedMultiplier);
+        this.updateSparkles(speedMultiplier);
         
         // Вращение астральных частиц
         if (this.isAstral) {
-            this.astralAngle += 0.05;
+            this.astralAngle += 0.05 * speedMultiplier;
         }
         
         // Проверка окончания режима огня Феникса
@@ -444,8 +444,8 @@ class Bird {
         // Обновление частиц молний для Искры
         this.lightningParticles = this.lightningParticles.filter(p => p.life > 0);
         for (let p of this.lightningParticles) {
-            p.life--;
-            p.length += 2; // Вылетать наружу
+            p.life -= speedMultiplier;
+            p.length += 2 * speedMultiplier; // Вылетать наружу
         }
         if (this.isSpark && this.sparkAvailable && Math.random() < 0.3) { // 30% шанс спавна
             this.lightningParticles.push({
@@ -457,38 +457,38 @@ class Bird {
         
         // Обновление неонового цвета
         if (this.skin.glowEffect) {
-            this.neonColorIndex = (this.neonColorIndex + 0.08) % this.neonColors.length;
+            this.neonColorIndex = (this.neonColorIndex + 0.08 * speedMultiplier) % this.neonColors.length;
         }
     }
 
     // Обновление частиц огня (феникс)
-    updateFireParticles() {
+    updateFireParticles(speedMultiplier = 1) {
         this.fireParticles = this.fireParticles.filter(p => p.life > 0);
         for (let p of this.fireParticles) {
-            p.life--;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.3;
+            p.life -= speedMultiplier;
+            p.x += p.vx * speedMultiplier;
+            p.y += p.vy * speedMultiplier;
+            p.vy += 0.3 * speedMultiplier;
         }
     }
 
     // Обновление частиц пепла (феникс при последней жизни)
-    updateAshParticles() {
+    updateAshParticles(speedMultiplier = 1) {
         this.ashParticles = this.ashParticles.filter(p => p.life > 0);
         for (let p of this.ashParticles) {
-            p.life--;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.1;
+            p.life -= speedMultiplier;
+            p.x += p.vx * speedMultiplier;
+            p.y += p.vy * speedMultiplier;
+            p.vy += 0.1 * speedMultiplier;
         }
     }
 
     // Обновление блеска (алмаз)
-    updateSparkles() {
+    updateSparkles(speedMultiplier = 1) {
         this.sparkles = this.sparkles.filter(s => s.life > 0);
         for (let s of this.sparkles) {
-            s.life--;
-            s.angle += s.angleVel;
+            s.life -= speedMultiplier;
+            s.angle += s.angleVel * speedMultiplier;
             s.x = this.x + Math.cos(s.angle) * s.radius;
             s.y = this.y + Math.sin(s.angle) * s.radius;
         }
@@ -2713,14 +2713,14 @@ class Game {
     }
 
     // Обновление частиц разрушения
-    updateDestructionParticles() {
+    updateDestructionParticles(speedMultiplier = 1) {
         if (!this.destructionParticles) return;
         
         this.destructionParticles = this.destructionParticles.filter(p => {
             p.life--;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.2; // гравитация
+            p.x += p.vx * speedMultiplier;
+            p.y += p.vy * speedMultiplier;
+            p.vy += 0.2 * speedMultiplier; // гравитация
             return p.life > 0;
         });
     }
@@ -2740,7 +2740,7 @@ class Game {
     }
 
     // Обновление частиц пепла
-    updateAshParticles() {
+    updateAshParticles(speedMultiplier = 1) {
         if (this.themeSystem.currentTheme !== 'ash') return;
         
         // Удаляем старые частицы
@@ -2748,10 +2748,10 @@ class Game {
         
         // Обновляем существующие
         for (let p of this.ashParticles) {
-            p.life--;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.vy += 0.05; // медленное падение
+            p.life -= speedMultiplier;
+            p.x += p.vx * speedMultiplier;
+            p.y += p.vy * speedMultiplier;
+            p.vy += 0.05 * speedMultiplier; // медленное падение
         }
         
         // Спавним новые частицы
@@ -2879,7 +2879,7 @@ class Game {
         this.updateDestructionParticles();
 
         // Обновление частиц пепла для темы Ash
-        this.updateAshParticles();
+        this.updateAshParticles(speedMultiplier);
 
         // Проверка столкновения с трубами
         for (let pipe of this.pipeManager.pipes) {
