@@ -216,6 +216,7 @@ class Bird {
         
         // Параметры скина
         this.gravity = GAME_CONFIG.gravity * (skin.gravityMultiplier || 1);
+        this.jumpPower = GAME_CONFIG.jumpPower;
         this.coinMultiplier = skin.coinMultiplier || 1;
         this.armor = skin.armor || 0;
         this.armorDamaged = 0; // сколько раз броня была повреждена (0, 1, 2)
@@ -287,7 +288,7 @@ class Bird {
     // Прыжок (при нажатии Space/клик)
     jump() {
         // Неуязвимость не блокирует прыжок
-        this.velocityY = -GAME_CONFIG.jumpPower;
+        this.velocityY = -this.jumpPower;
         this.rotation = -0.3;
     }
 
@@ -396,10 +397,21 @@ class Bird {
 
     // Обновление положения и физики
     update(speedMultiplier = 1) {
+        if (this.game.state === 'menu' && this.game.difficulty === 'training') {
+            // Только эффекты, без физики
+            this.updateFireParticles(speedMultiplier);
+            this.updateAshParticles(speedMultiplier);
+            this.updateSparkles(speedMultiplier);
+            if (this.isAstral) {
+                this.astralAngle += 0.05 * speedMultiplier;
+            }
+            return;
+        }
+
         // Режим прямого полёта
         if (this.game.straightMode) {
             this.velocityY = 0;
-        } else if (this.straightFlightActive || this.phoenixFireMode) {
+        } else if (this.straightFlightActive || this.phoenixFireMode || (this.game.difficulty === 'training' && this.game.tutorialStep === 0)) {
             this.velocityY = 0; // Отключить гравитацию
         } else {
             // Гравитация
@@ -1162,7 +1174,10 @@ class PipeManager {
         });
 
         // Генерация новых труб
-        if (!this.spawnPipes || this.game.straightMode) return;
+        if (this.game.difficulty === 'training' && this.game.elapsedTime >= 7 && this.spawnPipes) {
+            this.pipeSpawnDelay = 0;
+        }
+        if (!this.spawnPipes || this.game.straightMode || (this.game.difficulty === 'training' && this.game.elapsedTime < 7)) return;
         if (this.pipeSpawnDelay > 0) {
             this.pipeSpawnDelay--;
         } else {
@@ -1178,7 +1193,9 @@ class PipeManager {
         if (this.totalPipesSpawned > 20) {
             // Размер зазора в зависимости от сложности
             let startGap, decreasePerBatch, batchSize, minGap;
-            if (this.game.difficulty === 'easy') {
+            if (this.game.difficulty === 'training') {
+                startGap = 400; decreasePerBatch = 5; batchSize = 30; minGap = 250;
+            } else if (this.game.difficulty === 'easy') {
                 startGap = 350; decreasePerBatch = 10; batchSize = 20; minGap = 200;
             } else if (this.game.difficulty === 'hard') {
                 startGap = 250; decreasePerBatch = 50; batchSize = 10; minGap = 50;
@@ -1192,7 +1209,7 @@ class PipeManager {
             const maxTopHeight = GAME_CONFIG.canvasHeight - gapSize - 60; // минимум для нижней трубы (видна)
             
             // Плавное изменение высоты зазора (не более maxGapHeightDifference пикселей)
-            const maxDiff = this.game.difficulty === 'easy' ? 75 : this.game.difficulty === 'normal' ? 100 : 120;
+            const maxDiff = this.game.difficulty === 'training' ? 50 : this.game.difficulty === 'easy' ? 75 : this.game.difficulty === 'normal' ? 100 : 120;
             const minNewGap = Math.max(minTopHeight, this.lastGapCenter - maxDiff);
             const maxNewGap = Math.min(maxTopHeight, this.lastGapCenter + maxDiff);
             
@@ -1380,6 +1397,10 @@ class CoinManager {
                 }
                 this.game.bird.addSparkleEffect();
                 this.coins.splice(i, 1);
+                if (this.game.difficulty === 'training' && !this.game.tutorialCoinsShown) {
+                    this.game.tutorialCoinsShown = true;
+                    this.game.tutorialStep = 3;
+                }
             }
         }
     }
@@ -1690,6 +1711,35 @@ class Game {
         this.firstJump = false; // флаг первого прыжка
         this.straightMode = true; // режим прямого полёта
 
+        // Инициализация обучения
+        this.tutorialStep = 0; // шаг обучения
+        this.tutorialMessages = [
+            "Нажмите на экран чтобы начать",
+            "Продолжайте нажимать, чтобы поддерживать равновесие",
+            "Избегайте труб, они могут вас убить",
+            "Собирайте монеты, они нужны для покупки персонажей и тем",
+            "Но помните: в реальной игре всё будет намного сложнее и интереснее!"
+        ];
+        this.tutorialPipesShown = false;
+        this.tutorialCoinsShown = false;
+
+        // Звуки учителя
+        this.teacherSounds = {
+            1: new Audio('sounds/Teacher1.mp3'),
+            2: new Audio('sounds/Teacher2.mp3'),
+            3: new Audio('sounds/Teacher3.mp3'),
+            4: new Audio('sounds/Teacher4.mp3')
+        };
+        this.lastPlayedStep = 0;
+        this.tutorialCompleted = false;
+        this.paused = false;
+
+        if (this.difficulty === 'training') {
+            document.getElementById('startTutorialText').innerHTML = `<img src="Bird-Teacher.png" alt="Учитель"> ${this.tutorialMessages[0]}`;
+            this.skin = this.characterSystem.getCurrentCharacterData();
+            this.bird = new Bird(GAME_CONFIG.canvasWidth / 4, GAME_CONFIG.canvasHeight / 2, this.skin, this.themeSystem.currentTheme, this);
+        }
+
         this.setupEventListeners();
         this.renderUI();
         this.gameLoop();
@@ -1754,9 +1804,13 @@ class Game {
     setupEventListeners() {
         // Старт игры
         const startBtn = document.getElementById('startBtn');
-        startBtn.addEventListener('click', () => this.startGame());
+        startBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.startGame();
+        });
         startBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
+            e.stopPropagation();
             this.startGame();
         });
 
@@ -1855,13 +1909,27 @@ class Game {
             this.showMenu();
         });
 
+        // Кнопка меню из модалки обучения
+        const menuFromTutorialBtn = document.getElementById('menuFromTutorial');
+        if (menuFromTutorialBtn) {
+            menuFromTutorialBtn.addEventListener('click', () => {
+                document.getElementById('tutorialCompleteModal').classList.remove('active');
+                this.showMenu();
+            });
+            menuFromTutorialBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                document.getElementById('tutorialCompleteModal').classList.remove('active');
+                this.showMenu();
+            });
+        }
+
         // Управление игроком
         document.addEventListener('keydown', (e) => {
             // Если фокус в консоли, не обрабатываем игровые команды
             const consoleInput = document.getElementById('consoleInput');
             const isConsoleActive = document.activeElement === consoleInput;
 
-            if (e.code === 'Space') {
+            if (e.key === ' ') {
                 if (!isConsoleActive) {
                     e.preventDefault();
                     if (this.state === 'playing') {
@@ -1872,6 +1940,11 @@ class Game {
                         } else {
                             this.bird.jump();
                             this.bird.addFireEffect();
+                            if (this.difficulty === 'training') {
+                                if (this.tutorialStep === 0) {
+                                    this.tutorialStep = 1;
+                                }
+                            }
                         }
                     }
                 }
@@ -1881,7 +1954,8 @@ class Game {
             }
         });
 
-        document.addEventListener('click', () => {
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('button')) return;
             if (this.state === 'playing') {
                 if (this.straightMode && this.elapsedTime > 1) {
                     this.straightMode = false;
@@ -1890,6 +1964,9 @@ class Game {
                 } else {
                     this.bird.jump();
                     this.bird.addFireEffect();
+                    if (this.difficulty === 'training' && this.tutorialStep === 0) {
+                        this.tutorialStep = 1;
+                    }
                 }
             }
         });
@@ -1904,6 +1981,9 @@ class Game {
                 } else {
                     this.bird.jump();
                     this.bird.addFireEffect();
+                    if (this.difficulty === 'training' && this.tutorialStep === 0) {
+                        this.tutorialStep = 1;
+                    }
                 }
             }
         });
@@ -2558,6 +2638,12 @@ class Game {
         this.pipeCount = 0;
         this.debuffModifiers = {};
         this.straightMode = true; // включить режим прямого полёта
+        this.tutorialStep = 0; // сброс обучения
+        this.tutorialPipesShown = false;
+        this.tutorialCoinsShown = false;
+        this.lastPlayedStep = 0;
+        this.tutorialCompleted = false;
+        this.paused = false;
 
         this.bird = new Bird(GAME_CONFIG.canvasWidth / 4, GAME_CONFIG.canvasHeight / 2, this.skin, this.themeSystem.currentTheme, this);
         this.pipeManager = new PipeManager(this);
@@ -2569,6 +2655,9 @@ class Game {
         document.getElementById('gameHUD').style.display = 'block';
         document.querySelector('.hud-item.score').classList.add('active');
         document.querySelector('.hud-item.coins').classList.add('active');
+        
+        // Очистить начальное сообщение обучения
+        document.getElementById('startTutorialText').innerHTML = '';
         document.querySelector('.hud-item.status').classList.add('active');
 
         if (this.bird.armor > 0) {
@@ -2887,8 +2976,13 @@ class Game {
         }
 
         const multiplier = this.skin.coinMultiplier || 1;
-        const finalCoins = Math.floor(this.runCoins * multiplier);
-        this.characterSystem.addCoins(finalCoins);
+        let finalCoins = Math.floor(this.runCoins * multiplier);
+        if (this.difficulty === 'easy') {
+            finalCoins = Math.floor(finalCoins / 2);
+        }
+        if (this.difficulty !== 'training') {
+            this.characterSystem.addCoins(finalCoins);
+        }
         this.characterSystem.addGems(this.runGems);
 
         // Увеличить счетчик пройденных труб для текущего персонажа
@@ -2915,11 +3009,23 @@ class Game {
         }
     }
 
+    showTutorialCompleteModal() {
+        const modal = document.getElementById('tutorialCompleteModal');
+        modal.classList.add('active');
+        document.getElementById('tutorialText').innerHTML = '';
+    }
+
     showMenu() {
         this.state = 'menu';
         document.getElementById('startScreen').classList.add('active');
         document.getElementById('gameOverScreen').classList.remove('active');
         document.getElementById('gameHUD').style.display = 'none';
+        document.getElementById('startBtn').style.display = 'block';
+        if (this.difficulty === 'training') {
+            document.getElementById('startTutorialText').innerHTML = `<img src="Bird-Teacher.png" alt="Учитель"> ${this.tutorialMessages[0]}`;
+        } else {
+            document.getElementById('startTutorialText').innerHTML = '';
+        }
         this.renderUI();
     }
 
@@ -2949,6 +3055,7 @@ class Game {
 
     setupDifficultyButtonsInModal(container) {
         const difficulties = [
+            { key: 'training', label: 'Обучение', color: '#9C27B0' },
             { key: 'easy', label: 'Лёгкий', color: '#4CAF50' },
             { key: 'normal', label: 'Нормальный', color: '#FF9800' },
             { key: 'hard', label: 'Сложный', color: '#F44336' }
@@ -2982,6 +3089,20 @@ class Game {
             localStorage.setItem('difficulty', nextDiff.key);
             btn.textContent = nextDiff.label;
             btn.style.background = `linear-gradient(135deg, ${nextDiff.color} 0%, ${nextDiff.color}80 100%)`;
+            // Update menu display for training
+            if (this.state === 'menu') {
+                document.getElementById('startBtn').style.display = 'block';
+                if (this.difficulty === 'training') {
+                    document.getElementById('startTutorialText').innerHTML = `<img src="Bird-Teacher.png" alt="Учитель"> ${this.tutorialMessages[0]}`;
+                    if (!this.bird) {
+                        this.skin = this.characterSystem.getCurrentCharacterData();
+                        this.bird = new Bird(GAME_CONFIG.canvasWidth / 4, GAME_CONFIG.canvasHeight / 2, this.skin, this.themeSystem.currentTheme, this);
+                    }
+                } else {
+                    document.getElementById('startTutorialText').innerHTML = '';
+                    this.bird = null;
+                }
+            }
         });
         btn.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -2992,6 +3113,20 @@ class Game {
             localStorage.setItem('difficulty', nextDiff.key);
             btn.textContent = nextDiff.label;
             btn.style.background = `linear-gradient(135deg, ${nextDiff.color} 0%, ${nextDiff.color}80 100%)`;
+            // Update menu display for training
+            if (this.state === 'menu') {
+                document.getElementById('startBtn').style.display = 'block';
+                if (this.difficulty === 'training') {
+                    document.getElementById('startTutorialText').innerHTML = `<img src="Bird-Teacher.png" alt="Учитель"> ${this.tutorialMessages[0]}`;
+                    if (!this.bird) {
+                        this.skin = this.characterSystem.getCurrentCharacterData();
+                        this.bird = new Bird(GAME_CONFIG.canvasWidth / 4, GAME_CONFIG.canvasHeight / 2, this.skin, this.themeSystem.currentTheme, this);
+                    }
+                } else {
+                    document.getElementById('startTutorialText').innerHTML = '';
+                    this.bird = null;
+                }
+            }
         });
         container.appendChild(btn);
     }
@@ -3035,9 +3170,43 @@ class Game {
             this.currentSpeedMultiplier *= this.slowMotionFactor;
         }
 
+        // Замедление в режиме обучения
+        if (this.difficulty === 'training') {
+            this.currentSpeedMultiplier *= 0.5; // замедлить в 2 раза
+        }
+
+        // Обновление обучения
+        if (this.difficulty === 'training') {
+            const tutorialEl = document.getElementById('tutorialText');
+            const message = this.tutorialMessages[this.tutorialStep] || '';
+            tutorialEl.innerHTML = message ? `<img src="Bird-Teacher.png" alt="Учитель"> ${message}` : '';
+            if (this.tutorialStep > 0 && this.tutorialStep !== this.lastPlayedStep) {
+                this.teacherSounds[this.tutorialStep].play();
+                this.lastPlayedStep = this.tutorialStep;
+            }
+            // Временные переходы
+            if (this.elapsedTime > 7 && this.tutorialStep === 1) {
+                this.tutorialStep = 2;
+            } else if (this.elapsedTime > 10.5 && this.tutorialStep === 2) {
+                this.tutorialStep = 3;
+            } else if (this.elapsedTime > 14.5 && this.tutorialStep === 3) {
+                this.tutorialStep = 4;
+                this.paused = true;
+            } else if (this.elapsedTime > 21 && this.tutorialStep === 4 && !this.tutorialCompleted) {
+                this.showTutorialCompleteModal();
+                this.tutorialCompleted = true;
+            }
+        } else {
+            document.getElementById('tutorialText').innerHTML = '';
+        }
+
+        if (this.paused) return;
+
         // Обновление птицы
-        this.bird.update(speedMultiplier);
-        this.bird.addFireEffect();
+        if (this.state === 'playing' && this.bird) {
+            this.bird.update(speedMultiplier);
+            this.bird.addFireEffect();
+        }
         
         // Дополнительный огонь для Феникса в режиме ярости
         if (this.bird.phoenixEffect && this.bird.phoenixFireMode) {
@@ -3168,7 +3337,11 @@ class Game {
         // Обновить HUD
         document.getElementById('hudScore').textContent = this.score;
         const multiplier = this.skin.coinMultiplier || 1;
-        document.getElementById('hudCurrency').textContent = `${Math.floor(this.runCoins * multiplier)}🪙|${this.runGems}💎`;
+        let displayCoins = Math.floor(this.runCoins * multiplier);
+        if (this.difficulty === 'easy') {
+            displayCoins = Math.floor(displayCoins / 2);
+        }
+        document.getElementById('hudCurrency').textContent = `${displayCoins}🪙|${this.runGems}💎`;
 
         if (this.bird.armor > 0) {
             document.querySelector('.hud-item.status').textContent = `Броня: ${this.bird.armor}`;
@@ -3279,11 +3452,11 @@ class Game {
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        if (this.state === 'playing') {
+        if (this.state === 'playing' || (this.state === 'menu' && this.difficulty === 'training')) {
             // Рисование игровых объектов
-            this.pipeManager.draw(this.ctx, this.themeSystem.currentTheme);
-            this.coinManager.draw(this.ctx, this.themeSystem.currentTheme);
-            this.bird.draw(this.ctx);
+            this.pipeManager && this.pipeManager.draw(this.ctx, this.themeSystem.currentTheme);
+            this.coinManager && this.coinManager.draw(this.ctx, this.themeSystem.currentTheme);
+            this.bird && this.bird.draw(this.ctx);
 
             // Рисование частиц разрушения
             this.drawDestructionParticles(this.ctx);

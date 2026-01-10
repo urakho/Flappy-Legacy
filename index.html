@@ -15,11 +15,13 @@
     <div id="startScreen" class="screen active">
         <div class="screen-content">
             <h1>FLAPPY LEGACY</h1>
+            <div id="startTutorialText" class="tutorial-text"></div>
             <div class="stats-display">
                 <div class="stat"><span>Рекорд:</span> <strong id="recordDisplay">0</strong></div>
                 <div class="stat"><span>Общий баланс:</span> <span id="currencyDisplay">0🪙|0💎</span></div>
             </div>
             <button id="startBtn" class="btn btn-primary">СТАРТ</button>
+            <div id="startTutorialText" class="tutorial-text"></div>
             
             <div class="menu-buttons">
                 <button id="settingsBtn" class="btn btn-secondary">Настройки</button>
@@ -45,6 +47,14 @@
         </div>
     </div>
 
+    <!-- Модалка завершения обучения -->
+    <div id="tutorialCompleteModal" class="modal">
+        <div class="modal-content tutorial-modal">
+            <h1>ОБУЧЕНИЕ ПРОЙДЕНО!</h1>
+            <p>Теперь вы можете приступать к реальной игре</p>            <img src="Bird-Teacher.png" alt="Учитель" style="width: 100px; height: auto;">            <button id="menuFromTutorial" class="btn btn-primary">МЕНЮ</button>
+        </div>
+    </div>
+
     <!-- HUD во время игры -->
     <div id="gameHUD" class="hud">
         <div class="hud-item score">Счёт: <span id="hudScore">0</span></div>
@@ -52,6 +62,9 @@
         <div class="hud-item status" id="hudStatus"></div>
         <div class="hud-item ability" id="hudAbility"></div>
     </div>
+
+    <!-- Текстовое обучение -->
+    <div id="tutorialText" class="tutorial-text"></div>
 
     <!-- Консоль -->
     <div id="console" class="console">

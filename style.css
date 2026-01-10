@@ -109,7 +109,7 @@ h3 {
 /* КНОПКИ */
 .btn {
     padding: 15px 40px;
-    margin: 10px 5px;
+    margin: 10px auto;
     font-size: 1.1em;
     border: none;
     border-radius: 10px;
@@ -118,6 +118,8 @@ h3 {
     transition: all 0.3s ease;
     text-transform: uppercase;
     letter-spacing: 1px;
+    position: relative;
+    z-index: 3000;
 }
 
 .btn-primary {
@@ -388,7 +390,7 @@ h3 {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1000;
+    z-index: 10000;
     left: 0;
     top: 0;
     width: 100%;
@@ -396,8 +398,14 @@ h3 {
     background-color: rgba(0, 0, 0, 0.5);
 }
 
+.modal.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 #abilitiesModal {
-    z-index: 1001;
+    z-index: 10001;
 }
 
 .modal-content {
@@ -414,6 +422,36 @@ h3 {
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
     max-height: 80vh;
     overflow-y: auto;
+}
+
+.tutorial-modal {
+    text-align: center;
+    max-width: 350px;
+    width: 60%;
+    max-height: none;
+    overflow-y: visible;
+    margin: 0;
+    padding: 15px;
+}
+
+.tutorial-modal h1 {
+    font-size: 1.5em;
+    margin-bottom: 8px;
+}
+
+.tutorial-modal p {
+    font-size: 1em;
+    margin-bottom: 15px;
+}
+
+.tutorial-modal img {
+    display: block;
+    margin: 10px auto;
+}
+
+.tutorial-modal button {
+    display: block;
+    margin: 10px auto;
 }
 
 .modal-close {
@@ -656,4 +694,30 @@ h3 {
         font-size: 32px;
         color: red;
     }
+}
+
+/* Текстовое обучение */
+.tutorial-text {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    z-index: 2000;
+    pointer-events: none;
+    max-width: 300px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tutorial-text img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
 }
