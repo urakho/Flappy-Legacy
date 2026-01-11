@@ -216,16 +216,22 @@ class Bird {
         
         // Параметры скина
         this.gravity = GAME_CONFIG.gravity * (skin.gravityMultiplier || 1);
-        if (game.difficulty === 'training' || game.difficulty === 'easy') {
+        if (game.difficulty === 'training') {
+            this.gravity *= 0.2; // Уменьшить гравитацию на 80% в обучении
+        } else if (game.difficulty === 'super-easy') {
+            this.gravity *= 0.4; // Уменьшить гравитацию на 60% в сверх-лёгком
+        } else if (game.difficulty === 'easy') {
             this.gravity *= 0.6; // Уменьшить гравитацию для облегчения управления
         }
         this.jumpPower = GAME_CONFIG.jumpPower;
         if (game.difficulty === 'training') {
-            this.jumpPower *= 0.9; // Уменьшить прыжок в обучении
+            this.jumpPower *= 0.5; // Уменьшить прыжок на 20% в обучении
+        } else if (game.difficulty === 'super-easy') {
+            this.jumpPower *= 0.8; // Уменьшить прыжок на 20% в сверх-лёгком
         }
         // Дополнительное понижение прыжка на смартфонах в лёгком и обучении
         const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile && (game.difficulty === 'training' || game.difficulty === 'easy')) {
+        if (isMobile && (game.difficulty === 'training' || game.difficulty === 'easy' || game.difficulty === 'super-easy')) {
             this.jumpPower *= 0.9;
         }
         this.coinMultiplier = skin.coinMultiplier || 1;
@@ -1162,7 +1168,10 @@ class PipeManager {
         // Скорость зависит от скина и текущего ускорения
         const skinSpeedMult = this.game.skin.speedMultiplier || 1;
         const gameSpeedMult = this.game.currentSpeedMultiplier || GAME_CONFIG.baseSpeedMultiplier;
-        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
+        let speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
+        if (this.game.difficulty === 'super-easy') {
+            speed *= 0.8; // Уменьшить скорость на 20% в сверх-лёгком
+        }
 
         // Движение труб
         for (let pipe of this.pipes) {
@@ -1201,11 +1210,17 @@ class PipeManager {
 
     spawnPipe() {
         this.totalPipesSpawned++;
+        let gapSize = GAME_CONFIG.pipeGapSize;
+        if (this.game.difficulty === 'super-easy') {
+            gapSize += 20; // Увеличить зазор в сверх-лёгком
+        }
         if (this.totalPipesSpawned > 20) {
             // Размер зазора в зависимости от сложности
             let startGap, decreasePerBatch, batchSize, minGap;
             if (this.game.difficulty === 'training') {
                 startGap = 400; decreasePerBatch = 5; batchSize = 30; minGap = 250;
+            } else if (this.game.difficulty === 'super-easy') {
+                startGap = 370; decreasePerBatch = 5; batchSize = 30; minGap = 270;
             } else if (this.game.difficulty === 'easy') {
                 startGap = 350; decreasePerBatch = 10; batchSize = 20; minGap = 200;
             } else if (this.game.difficulty === 'hard') {
@@ -1220,7 +1235,7 @@ class PipeManager {
             const maxTopHeight = GAME_CONFIG.canvasHeight - gapSize - 60; // минимум для нижней трубы (видна)
             
             // Плавное изменение высоты зазора (не более maxGapHeightDifference пикселей)
-            const maxDiff = this.game.difficulty === 'training' ? 50 : this.game.difficulty === 'easy' ? 75 : this.game.difficulty === 'normal' ? 100 : 120;
+            const maxDiff = this.game.difficulty === 'training' ? 50 : this.game.difficulty === 'super-easy' ? 30 : this.game.difficulty === 'easy' ? 75 : this.game.difficulty === 'normal' ? 100 : 120;
             const minNewGap = Math.max(minTopHeight, this.lastGapCenter - maxDiff);
             const maxNewGap = Math.min(maxTopHeight, this.lastGapCenter + maxDiff);
             
@@ -1370,7 +1385,10 @@ class CoinManager {
         // Скорость монет зависит от скина и текущего ускорения
         const skinSpeedMult = this.game.skin.speedMultiplier || 1;
         const gameSpeedMult = this.game.currentSpeedMultiplier || GAME_CONFIG.baseSpeedMultiplier;
-        const speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
+        let speed = GAME_CONFIG.pipeSpeed * skinSpeedMult * gameSpeedMult * speedMultiplier;
+        if (this.game.difficulty === 'super-easy') {
+            speed *= 0.8; // Уменьшить скорость на 20% в сверх-лёгком
+        }
 
         // Движение монет
         for (let coin of this.coins) {
@@ -2988,7 +3006,9 @@ class Game {
 
         const multiplier = this.skin.coinMultiplier || 1;
         let finalCoins = Math.floor(this.runCoins * multiplier);
-        if (this.difficulty === 'easy') {
+        if (this.difficulty === 'super-easy') {
+            finalCoins = Math.floor(finalCoins / 3);
+        } else if (this.difficulty === 'easy') {
             finalCoins = Math.floor(finalCoins / 2);
         }
         if (this.difficulty !== 'training') {
@@ -3067,6 +3087,7 @@ class Game {
     setupDifficultyButtonsInModal(container) {
         const difficulties = [
             { key: 'training', label: 'Обучение', color: '#9C27B0' },
+            { key: 'super-easy', label: 'Сверх-лёгкий', color: '#00BCD4' },
             { key: 'easy', label: 'Лёгкий', color: '#4CAF50' },
             { key: 'normal', label: 'Нормальный', color: '#FF9800' },
             { key: 'hard', label: 'Сложный', color: '#F44336' }
@@ -3349,7 +3370,9 @@ class Game {
         document.getElementById('hudScore').textContent = this.score;
         const multiplier = this.skin.coinMultiplier || 1;
         let displayCoins = Math.floor(this.runCoins * multiplier);
-        if (this.difficulty === 'easy') {
+        if (this.difficulty === 'super-easy') {
+            displayCoins = Math.floor(displayCoins / 3);
+        } else if (this.difficulty === 'easy') {
             displayCoins = Math.floor(displayCoins / 2);
         }
         document.getElementById('hudCurrency').textContent = `${displayCoins}🪙|${this.runGems}💎`;
