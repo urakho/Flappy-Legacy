@@ -2,7 +2,7 @@
 const GAME_CONFIG = {
     canvasWidth: 800,
     canvasHeight: 600,
-    gravity: 0.75,          // базовая гравитация
+    gravity: 0.5,          // базовая гравитация
     jumpPower: 10,           // мощность прыжка
     pipeSpeed: 10,           // скорость движения труб (базовая, 0.8 на старте)
     pipeSpacing: 200,       // минимальное расстояние между трубами
@@ -216,7 +216,18 @@ class Bird {
         
         // Параметры скина
         this.gravity = GAME_CONFIG.gravity * (skin.gravityMultiplier || 1);
+        if (game.difficulty === 'training' || game.difficulty === 'easy') {
+            this.gravity *= 0.6; // Уменьшить гравитацию для облегчения управления
+        }
         this.jumpPower = GAME_CONFIG.jumpPower;
+        if (game.difficulty === 'training') {
+            this.jumpPower *= 0.9; // Уменьшить прыжок в обучении
+        }
+        // Дополнительное понижение прыжка на смартфонах в лёгком и обучении
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile && (game.difficulty === 'training' || game.difficulty === 'easy')) {
+            this.jumpPower *= 0.9;
+        }
         this.coinMultiplier = skin.coinMultiplier || 1;
         this.armor = skin.armor || 0;
         this.armorDamaged = 0; // сколько раз броня была повреждена (0, 1, 2)
