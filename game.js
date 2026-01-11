@@ -3010,6 +3010,8 @@ class Game {
             finalCoins = Math.floor(finalCoins / 3);
         } else if (this.difficulty === 'easy') {
             finalCoins = Math.floor(finalCoins / 2);
+        } else if (this.difficulty === 'hard') {
+            finalCoins *= 2;
         }
         if (this.difficulty !== 'training') {
             this.characterSystem.addCoins(finalCoins);
@@ -3374,6 +3376,8 @@ class Game {
             displayCoins = Math.floor(displayCoins / 3);
         } else if (this.difficulty === 'easy') {
             displayCoins = Math.floor(displayCoins / 2);
+        } else if (this.difficulty === 'hard') {
+            displayCoins *= 2;
         }
         document.getElementById('hudCurrency').textContent = `${displayCoins}🪙|${this.runGems}💎`;
 
