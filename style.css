@@ -721,3 +721,40 @@ h3 {
     height: 150px;
     object-fit: contain;
 }
+
+/* Кнопка способности для мобильных */
+.ability-button {
+    position: fixed;
+    bottom: 50px; /* Чуть выше от низа */
+    right: 50px; /* Чуть левее от правого края, чтобы быть в области игры */
+    padding: 15px 20px;
+    font-size: 24px;
+    font-weight: bold;
+    background: #ff0000; /* Красный цвет */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Круглая форма */
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: none; /* Скрыта по умолчанию */
+    z-index: 1000;
+    width: 60px; /* Фиксированная ширина для круга */
+    height: 60px; /* Фиксированная высота для круга */
+    text-align: center;
+    line-height: 30px; /* Центрирование текста */
+}
+
+.ability-button:hover {
+    background: #cc0000; /* Темнее красный при наведении */
+}
+
+.ability-button:active {
+    transform: scale(0.95);
+}
+
+/* Показывать только на мобильных */
+@media (max-width: 768px) {
+    .ability-button {
+        display: block;
+    }
+}

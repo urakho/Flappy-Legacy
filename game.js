@@ -156,7 +156,7 @@ const CHARACTERS = {
         color: '#df4e00ff',
         description: 'Легендарная птица огня и возрождения',
         abilities: 'E: Режим ярости (одноразовая), огненная стена при 1 жизни',
-        debuffs: '3 жизни, расстояние между трубами -15%',
+        debuffs: '3 жизни',
         lives: 3,
         phoenixEffect: true
     }
@@ -1749,6 +1749,11 @@ class Game {
             "Собирайте монеты, они нужны для покупки персонажей и тем",
             "Но помните: в реальной игре всё будет намного сложнее и интереснее!"
         ];
+
+        // Кнопка способности для мобильных
+        document.getElementById('abilityButton').addEventListener('click', () => {
+            this.activateAbility();
+        });
         this.tutorialPipesShown = false;
         this.tutorialCoinsShown = false;
 
@@ -2712,6 +2717,14 @@ class Game {
     }
 
     activateAbility() {
+        if (this.bird.hasAbility === 'autopilot') {
+            this.bird.abilityActive = !this.bird.abilityActive;
+            const abilityEl = document.querySelector('.hud-item.ability');
+            if (abilityEl) {
+                abilityEl.textContent = this.bird.abilityActive ? 'Способность: АКТИВНА!' : 'Способность: ГОТОВА';
+            }
+            return;
+        }
         if (this.bird.hasStraightFlight && !this.bird.straightFlightActive && !this.bird.straightFlightUsed) {
             // Первородная птица: лететь прямо
             this.bird.straightFlightActive = true;
@@ -3380,6 +3393,17 @@ class Game {
             displayCoins *= 2;
         }
         document.getElementById('hudCurrency').textContent = `${displayCoins}🪙|${this.runGems}💎`;
+
+        // Показать/скрыть кнопку способности
+        if (this.bird.hasAbility && this.isMobile) {
+            const button = document.getElementById('abilityButton');
+            button.style.display = 'block';
+            const canvasRect = this.canvas.getBoundingClientRect();
+            button.style.left = (canvasRect.right - 70) + 'px';
+            button.style.top = (canvasRect.bottom - 70) + 'px';
+        } else {
+            document.getElementById('abilityButton').style.display = 'none';
+        }
 
         if (this.bird.armor > 0) {
             document.querySelector('.hud-item.status').textContent = `Броня: ${this.bird.armor}`;
